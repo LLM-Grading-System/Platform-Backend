@@ -1,0 +1,31 @@
+[project]
+name = "gradingsystembackend"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi[standard]>=0.115.8",
+    "granian>=1.7.6",
+    "pydantic-settings>=2.8.0",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.9.7",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+lint.select = [
+    "ALL",
+]
+lint.ignore = [
+    "D",
+    "COM812"
+]
+lint.fixable = [
+    "F401", # delete unused imports
+    "I001", # sort imports
+    "W292" # newline at end of file
+]
