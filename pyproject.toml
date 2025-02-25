@@ -32,6 +32,8 @@ lint.ignore = [
     "TRY003",
     "EM101",
     "DTZ005",
+    "TC001",
+    "FAST002"
 ]
 lint.fixable = [
     "F401", # delete unused imports

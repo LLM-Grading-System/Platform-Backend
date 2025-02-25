@@ -7,5 +7,10 @@ class NoTaskError(Exception):
 
 
 @dataclass
+class SuchGitHubURLTaskExistError(Exception):
+    message: str
+
+
+@dataclass
 class NoCriteriaError(Exception):
     message: str

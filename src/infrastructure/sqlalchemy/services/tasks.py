@@ -4,7 +4,14 @@ from sqlmodel import select
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.infrastructure.sqlalchemy.models import Criteria, Task
-from src.services.tasks import CriteriaDTO, NoCriteriaError, NoTaskError, TaskDTO, TaskService
+from src.services.tasks import (
+    CriteriaDTO,
+    NoCriteriaError,
+    NoTaskError,
+    SuchGitHubURLTaskExistError,
+    TaskDTO,
+    TaskService,
+)
 
 
 class SqlAlchemyTaskService(TaskService):
@@ -14,6 +21,11 @@ class SqlAlchemyTaskService(TaskService):
     async def create_task(
         self, name: str, description: str, github_repo_url: str, level: str, tags: list[str], is_draft: bool
     ) -> TaskDTO:
+        query = select(Task).where(Task.gh_repo_url == github_repo_url)
+        result = await self.session.execute(query)
+        task = result.scalars().first()
+        if task:
+            raise SuchGitHubURLTaskExistError(message="Задача с таким github url уже существует")
         task = Task(
             name=name,
             description=description,
@@ -55,6 +67,11 @@ class SqlAlchemyTaskService(TaskService):
         tags: list[str],
         is_draft: bool,
     ) -> TaskDTO:
+        query = select(Task).where(Task.gh_repo_url == github_repo_url, Task.task_id != UUID(task_id))
+        result = await self.session.execute(query)
+        task = result.scalars().first()
+        if task:
+            raise SuchGitHubURLTaskExistError(message="Задача с таким github url уже существует")
         task = await self._get_task_by_task_id(task_id)
         task.name = name
         task.description = description
@@ -77,10 +94,12 @@ class SqlAlchemyTaskService(TaskService):
         criteria = result.scalars().all()
         return [self.from_criteria_model_to_dto(criterion) for criterion in criteria]
 
-    async def add_criteria_for_task(self, task_id: str, description: str, weight: float) -> None:
-        criteria = Criteria(task_id=UUID(task_id), description=description, weight=weight)
-        self.session.add(criteria)
+    async def add_criteria_for_task(self, task_id: str, description: str, weight: float) -> CriteriaDTO:
+        criterion = Criteria(task_id=UUID(task_id), description=description, weight=weight)
+        self.session.add(criterion)
         await self.session.commit()
+        await self.session.refresh(criterion)
+        return self.from_criteria_model_to_dto(criterion)
 
     async def edit_criteria_by_criteria_id(self, criteria_id: str, description: str, weight: float) -> CriteriaDTO:
         criterion = await self._get_criteria_by_criteria_id(criteria_id)

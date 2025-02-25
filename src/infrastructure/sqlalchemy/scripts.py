@@ -1,6 +1,6 @@
 from sqlmodel import select
 
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, AsyncEngine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from src.infrastructure.sqlalchemy.models import SQLModel, User
 from src.services.auth import Role
 from src.services.password import PasswordService
