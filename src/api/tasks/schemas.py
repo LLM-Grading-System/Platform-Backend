@@ -1,11 +1,12 @@
 from uuid import uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 
+from src.api.base_schema import BaseSchema
 from src.services.tasks import CriteriaDTO, TaskDTO
 
 
-class TaskResponse(BaseModel):
+class TaskResponse(BaseSchema):
     task_id: str = Field(examples=[str(uuid4())])
     name: str
     description: str
@@ -27,7 +28,8 @@ class TaskResponse(BaseModel):
         )
 
 
-class CriteriaResponse(BaseModel):
+class CriteriaResponse(BaseSchema):
+    task_id: str = Field(examples=[str(uuid4())])
     criteria_id: str = Field(examples=[str(uuid4())])
     description: str
     weight: float
@@ -37,13 +39,14 @@ class CriteriaResponse(BaseModel):
     def from_dto(criteria: CriteriaDTO) -> "CriteriaResponse":
         return CriteriaResponse(
             criteria_id=criteria.criteria_id,
+            task_id=criteria.task_id,
             description=criteria.description,
             weight=criteria.weight,
             created_at=int(criteria.created_at.timestamp()),
         )
 
 
-class CreateTaskRequest(BaseModel):
+class CreateTaskRequest(BaseSchema):
     name: str
     description: str
     github_repo_url: str
@@ -52,7 +55,7 @@ class CreateTaskRequest(BaseModel):
     is_draft: bool
 
 
-class EditTaskRequest(BaseModel):
+class EditTaskRequest(BaseSchema):
     name: str
     description: str
     github_repo_url: str
@@ -61,11 +64,11 @@ class EditTaskRequest(BaseModel):
     is_draft: bool
 
 
-class AddCriteriaRequest(BaseModel):
+class AddCriteriaRequest(BaseSchema):
     description: str
     weight: float
 
 
-class EditCriteriaRequest(BaseModel):
+class EditCriteriaRequest(BaseSchema):
     description: str
     weight: float

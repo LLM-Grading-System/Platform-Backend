@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlmodel import select
+from sqlmodel import desc, select
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.infrastructure.sqlalchemy.models import Criteria, Task
@@ -89,7 +89,7 @@ class SqlAlchemyTaskService(TaskService):
         await self.session.commit()
 
     async def get_criteria_by_task_id(self, task_id: str) -> list[CriteriaDTO]:
-        query = select(Criteria).where(Criteria.task_id == UUID(task_id))
+        query = select(Criteria).where(Criteria.task_id == UUID(task_id)).order_by(desc(Criteria.created_at))
         result = await self.session.execute(query)
         criteria = result.scalars().all()
         return [self.from_criteria_model_to_dto(criterion) for criterion in criteria]
@@ -146,6 +146,7 @@ class SqlAlchemyTaskService(TaskService):
     def from_criteria_model_to_dto(model: Criteria) -> CriteriaDTO:
         return CriteriaDTO(
             criteria_id=str(model.criteria_id),
+            task_id=str(model.task_id),
             description=model.description,
             weight=model.weight,
             created_at=model.created_at,

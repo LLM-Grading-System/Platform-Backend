@@ -32,9 +32,16 @@ async def get_user(
     auth_service: Annotated[AuthService, Depends(get_auth_service)],
 ) -> UserDTO:
     try:
-        return await auth_service.get_user(auth_token)
+        user = await auth_service.get_user(auth_token)
     except NoUserError as ex:
         raise APIError(
             message=ex.message,
             status=status.HTTP_401_UNAUTHORIZED,
         ) from ex
+    else:
+        if user.role != "admin":
+            raise APIError(
+                message="У вас недостаточно прав для просмотра или совершения операции",
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        return user

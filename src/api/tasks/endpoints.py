@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse
 
 from src.api.auth.dependencies import get_user
 from src.api.exceptions import APIError
-from src.api.schemas import SuccessResponse
+from src.api.general_schemas import SuccessResponse
 from src.api.tasks.dependencies import get_task_service
 from src.api.tasks.schemas import (
     AddCriteriaRequest,
@@ -15,6 +15,7 @@ from src.api.tasks.schemas import (
     EditTaskRequest,
     TaskResponse,
 )
+from src.api.utils import jsonify
 from src.services.auth import UserDTO
 from src.services.tasks import NoCriteriaError, NoTaskError, SuchGitHubURLTaskExistError, TaskService
 
@@ -42,7 +43,7 @@ async def create_task(
             tags=data.tags,
             is_draft=data.is_draft,
         )
-        return JSONResponse(content=TaskResponse.from_dto(task).model_dump(), status_code=status.HTTP_201_CREATED)
+        return jsonify(TaskResponse.from_dto(task), status_code=status.HTTP_201_CREATED)
     except SuchGitHubURLTaskExistError as ex:
         raise APIError(
             message=ex.message,
@@ -64,7 +65,7 @@ async def get_task(
 ) -> JSONResponse:
     try:
         task = await task_service.get_task_by_task_id(task_id)
-        return JSONResponse(content=TaskResponse.from_dto(task).model_dump())
+        return jsonify(TaskResponse.from_dto(task))
     except NoTaskError as ex:
         raise APIError(
             message=ex.message,
@@ -87,12 +88,12 @@ async def get_all_tasks(
     if gh_repo_url:
         try:
             task = await task_service.get_task_by_github_repository_url(gh_repo_url)
-            return JSONResponse(content=[TaskResponse.from_dto(task).model_dump()])
+            return jsonify([TaskResponse.from_dto(task)])
         except NoTaskError:
-            return JSONResponse(content=[])
+            return jsonify([])
     else:
         tasks = await task_service.get_all_tasks()
-        return JSONResponse(content=[TaskResponse.from_dto(task).model_dump() for task in tasks])
+        return jsonify([TaskResponse.from_dto(task) for task in tasks])
 
 
 @router.put(
@@ -118,7 +119,7 @@ async def edit_task(
             tags=data.tags,
             is_draft=data.is_draft,
         )
-        return JSONResponse(content=TaskResponse.from_dto(task).model_dump())
+        return jsonify(TaskResponse.from_dto(task))
     except NoTaskError as ex:
         raise APIError(
             message=ex.message,
@@ -144,7 +145,7 @@ async def remove_task(
 ) -> JSONResponse:
     try:
         await task_service.remove_task_by_task_id(task_id)
-        return JSONResponse(content=SuccessResponse(message="Задача успешно удалена").model_dump())
+        return jsonify(SuccessResponse(message="Задача успешно удалена"))
     except NoTaskError as ex:
         raise APIError(
             message=ex.message,
@@ -166,7 +167,7 @@ async def add_criteria(
     task_service: Annotated[TaskService, Depends(get_task_service)],
 ) -> JSONResponse:
     criteria = await task_service.add_criteria_for_task(task_id, data.description, data.weight)
-    return JSONResponse(content=CriteriaResponse.from_dto(criteria).model_dump(), status_code=status.HTTP_201_CREATED)
+    return jsonify(CriteriaResponse.from_dto(criteria), status_code=status.HTTP_201_CREATED)
 
 
 @router.get(
@@ -182,9 +183,15 @@ async def get_criteria_by_task_id(
     task_service: Annotated[TaskService, Depends(get_task_service)],
 ) -> JSONResponse:
     try:
+        await task_service.get_task_by_task_id(task_id)
         criteria = await task_service.get_criteria_by_task_id(task_id)
-        return JSONResponse(content=[CriteriaResponse.from_dto(criterion).model_dump() for criterion in criteria])
+        return jsonify([CriteriaResponse.from_dto(criterion) for criterion in criteria])
     except NoCriteriaError as ex:
+        raise APIError(
+            message=ex.message,
+            status=status.HTTP_404_NOT_FOUND,
+        ) from ex
+    except NoTaskError as ex:
         raise APIError(
             message=ex.message,
             status=status.HTTP_404_NOT_FOUND,
@@ -192,7 +199,7 @@ async def get_criteria_by_task_id(
 
 
 @router.put(
-    "/criteria/{criteria_id}",
+    "/{task_id}/criteria/{criteria_id}",
     response_model=CriteriaResponse,
     status_code=status.HTTP_200_OK,
     description="Edit criteria by ID",
@@ -200,14 +207,21 @@ async def get_criteria_by_task_id(
 )
 async def edit_criteria(
     criteria_id: Annotated[str, Path()],
+    task_id: Annotated[str, Path()],
     data: EditCriteriaRequest,
     _: Annotated[UserDTO, Depends(get_user)],
     task_service: Annotated[TaskService, Depends(get_task_service)],
 ) -> JSONResponse:
     try:
+        await task_service.get_task_by_task_id(task_id)
         criteria = await task_service.edit_criteria_by_criteria_id(criteria_id, data.description, data.weight)
-        return JSONResponse(content=CriteriaResponse.from_dto(criteria).model_dump())
+        return jsonify(CriteriaResponse.from_dto(criteria))
     except NoCriteriaError as ex:
+        raise APIError(
+            message=ex.message,
+            status=status.HTTP_404_NOT_FOUND,
+        ) from ex
+    except NoTaskError as ex:
         raise APIError(
             message=ex.message,
             status=status.HTTP_404_NOT_FOUND,
@@ -215,20 +229,27 @@ async def edit_criteria(
 
 
 @router.delete(
-    "/criteria/{criteria_id}",
+    "/{task_id}/criteria/{criteria_id}",
     status_code=status.HTTP_200_OK,
     description="Remove criteria by ID",
     summary="Remove Criteria",
 )
 async def remove_criteria(
     criteria_id: Annotated[str, Path()],
+    task_id: Annotated[str, Path()],
     _: Annotated[UserDTO, Depends(get_user)],
     task_service: Annotated[TaskService, Depends(get_task_service)],
 ) -> JSONResponse:
     try:
+        await task_service.get_task_by_task_id(task_id)
         await task_service.remove_criteria_by_criteria_id(criteria_id)
-        return JSONResponse(content=SuccessResponse(message="Критерий успешно удален").model_dump())
+        return jsonify(SuccessResponse(message="Критерий успешно удален"))
     except NoCriteriaError as ex:
+        raise APIError(
+            message=ex.message,
+            status=status.HTTP_404_NOT_FOUND,
+        ) from ex
+    except NoTaskError as ex:
         raise APIError(
             message=ex.message,
             status=status.HTTP_404_NOT_FOUND,

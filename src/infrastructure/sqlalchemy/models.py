@@ -49,7 +49,7 @@ class Task(SQLModel, table=True):
     tags: str = Field(nullable=False)
     is_draft: bool = Field(nullable=False)
 
-    criteria: list["Criteria"] = Relationship(back_populates="task")
+    criteria: list["Criteria"] = Relationship(back_populates="task", cascade_delete=True)
 
 
 class Criteria(SQLModel, table=True):

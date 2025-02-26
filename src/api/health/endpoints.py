@@ -1,6 +1,7 @@
 from fastapi import APIRouter, status
 
 from src.api.health.schemas import HealthResponse
+from src.api.utils import jsonify
 
 router = APIRouter(tags=["monitoring"])
 
@@ -12,4 +13,4 @@ router = APIRouter(tags=["monitoring"])
     summary="Health check",
 )
 def health_check() -> HealthResponse:
-    return HealthResponse(message="The service is alive")
+    return jsonify(HealthResponse(message="The service is alive"))

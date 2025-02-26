@@ -1,9 +1,11 @@
-from pydantic import BaseModel, Field
+from pydantic import Field
+
+from src.api.base_schema import BaseSchema
 
 
-class ErrorResponse(BaseModel):
+class ErrorResponse(BaseSchema):
     message: str = Field(examples=["Произошла ошибка при обработке запроса"])
 
 
-class SuccessResponse(BaseModel):
+class SuccessResponse(BaseSchema):
     message: str = Field(examples=["Операция успешно выполнена"])

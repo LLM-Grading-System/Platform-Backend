@@ -16,6 +16,7 @@ class TaskDTO:
 @dataclass
 class CriteriaDTO:
     criteria_id: str
+    task_id: str
     description: str
     weight: float
     created_at: datetime

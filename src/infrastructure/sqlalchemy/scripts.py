@@ -15,7 +15,8 @@ async def create_tables(engine: AsyncEngine) -> None:
 async def create_admin_user(engine: AsyncEngine, login: str, password: str) -> None:
     async with AsyncSession(engine) as session:
         query = select(User).where(User.login == login)
-        user = await session.execute(query)
+        result = await session.execute(query)
+        user = result.scalar_one_or_none()
         if not user:
             hashed_password, salt = PasswordService.create_hashed_password_and_salt(password)
             user = User(login=login, salt=salt, hashed_password=hashed_password, role=Role.ADMIN.value)

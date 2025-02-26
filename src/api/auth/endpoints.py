@@ -6,7 +6,8 @@ from starlette.responses import JSONResponse
 from src.api.auth.dependencies import get_auth_service, get_user
 from src.api.auth.schemas import LoginRequest, RegisterRequest, TokenResponse, UserResponse
 from src.api.exceptions import APIError
-from src.api.schemas import SuccessResponse
+from src.api.general_schemas import SuccessResponse
+from src.api.utils import jsonify
 from src.services.auth import AuthService, InvalidPasswordError, NoUserError, UserAlreadyExistError, UserDTO
 
 router = APIRouter(prefix="/auth", tags=["authorization"])
@@ -22,10 +23,7 @@ router = APIRouter(prefix="/auth", tags=["authorization"])
 async def get_current_user(
     user: Annotated[UserDTO, Depends(get_user)],
 ) -> JSONResponse:
-    return JSONResponse(
-        content=UserResponse.from_dto(user).model_dump(),
-        status_code=status.HTTP_200_OK,
-    )
+    return jsonify(UserResponse.from_dto(user))
 
 
 @router.post(
@@ -41,10 +39,7 @@ async def login(
 ) -> JSONResponse:
     try:
         token_data = await auth_service.login(data.login, data.password, data.user_agent)
-        return JSONResponse(
-            content=TokenResponse(token=token_data.token).model_dump(),
-            status_code=status.HTTP_200_OK,
-        )
+        return jsonify(TokenResponse(token=token_data.token))
     except NoUserError as ex:
         raise APIError(
             message=ex.message,
@@ -73,9 +68,7 @@ async def register(
         await auth_service.register(
             login=register_request.login, password=register_request.password, role=register_request.role
         )
-        return JSONResponse(
-            content=SuccessResponse(message="Аккаунт успешно создан").model_dump(), status_code=status.HTTP_201_CREATED
-        )
+        return jsonify(SuccessResponse(message="Аккаунт успешно создан"), status_code=status.HTTP_201_CREATED)
     except UserAlreadyExistError as ex:
         raise APIError(
             message=ex.message,

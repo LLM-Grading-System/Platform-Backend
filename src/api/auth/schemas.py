@@ -1,15 +1,16 @@
 import uuid
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 
+from src.api.base_schema import BaseSchema
 from src.services.auth import UserDTO
 
 
-class TokenResponse(BaseModel):
+class TokenResponse(BaseSchema):
     token: str = Field(examples=[str(uuid.uuid4())])
 
 
-class UserResponse(BaseModel):
+class UserResponse(BaseSchema):
     user_id: str
     login: str
     role: str
@@ -22,13 +23,13 @@ class UserResponse(BaseModel):
         )
 
 
-class LoginRequest(BaseModel):
+class LoginRequest(BaseSchema):
     login: str
     password: str
     user_agent: str
 
 
-class RegisterRequest(BaseModel):
+class RegisterRequest(BaseSchema):
     login: str
     password: str
     role: str
