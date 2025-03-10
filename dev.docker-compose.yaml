@@ -18,5 +18,23 @@ services:
       start_period: 10s
     restart: unless-stopped
 
+  minio:
+    image: minio/minio:RELEASE.2025-02-28T09-55-16Z
+    container_name: dev_minio
+    command: server --console-address ":9001" /data/
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    env_file: ".env"
+    volumes:
+      - artifacts_data:/data
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    restart: unless-stopped
+
 volumes:
   grading_data:
+  artifacts_data:

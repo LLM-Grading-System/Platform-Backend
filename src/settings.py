@@ -10,16 +10,17 @@ class ApplicationMode(Enum):
 
 
 class AppSettings(BaseSettings):
-    POSTGRES_DB: str = Field(default="public")
-    POSTGRES_USER: str = Field(default="postgres")
-    POSTGRES_PASSWORD: str = Field(default="postgres")
-    POSTGRES_PORT: int = Field(default=5432)
-    POSTGRES_HOST: str = Field(default="localhost")
     MODE: ApplicationMode = Field(default=ApplicationMode.DEVELOPMENT)
 
     @property
     def is_dev(self) -> bool:
         return self.MODE == ApplicationMode.DEVELOPMENT
+
+    POSTGRES_DB: str = Field(default="public")
+    POSTGRES_USER: str = Field(default="postgres")
+    POSTGRES_PASSWORD: str = Field(default="postgres")
+    POSTGRES_PORT: int = Field(default=5432)
+    POSTGRES_HOST: str = Field(default="localhost")
 
     @staticmethod
     def __generate_asyncpg_db_url(
@@ -41,6 +42,19 @@ class AppSettings(BaseSettings):
             self.POSTGRES_PORT,
             self.POSTGRES_DB,
         )
+
+    MINIO_BUCKET: str = Field(default="submissions")
+    MINIO_ROOT_USER: str = Field(default="minio")
+    MINIO_ROOT_PASSWORD: str = Field(default="password")
+    MINIO_ACCESS_KEY: str = Field(default="access_key")
+    MINIO_SECRET_KEY: str = Field(default="secret")
+    MINIO_HOST: str = Field(default="localhost")
+    MINIO_PORT: int = Field(default=9000)
+
+    @property
+    def s3_endpoint(self) -> str:
+        """Get S3 endpoint."""
+        return f"{self.MINIO_HOST}:{self.MINIO_PORT}"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
