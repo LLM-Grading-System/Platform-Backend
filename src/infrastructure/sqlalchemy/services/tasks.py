@@ -4,12 +4,8 @@ from sqlmodel import select
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.infrastructure.sqlalchemy.models import Task
-from src.services.tasks import (
-    NoTaskError,
-    SuchGitHubURLTaskExistError,
-    TaskDTO,
-    TaskService,
-)
+from src.services.exceptions import NotFoundError, AlreadyExistError
+from src.services.tasks import TaskDTO, TaskService
 
 
 class SqlAlchemyTaskService(TaskService):
@@ -23,7 +19,7 @@ class SqlAlchemyTaskService(TaskService):
         result = await self.session.execute(query)
         task = result.scalars().first()
         if task:
-            raise SuchGitHubURLTaskExistError(message="Задача с таким github url уже существует")
+            raise AlreadyExistError(message="Задача с таким github url уже существует")
         task = Task(
             name=name,
             system_instructions=system_instructions,
@@ -43,7 +39,7 @@ class SqlAlchemyTaskService(TaskService):
         result = await self.session.execute(query)
         task = result.scalars().first()
         if task is None:
-            raise NoTaskError(message="Задачи с таким URL не существует")
+            raise NotFoundError(message="Задачи с таким URL не существует")
         return self.from_model_to_dto(task)
 
     async def get_task_by_task_id(self, task_id: str) -> TaskDTO:
@@ -71,7 +67,7 @@ class SqlAlchemyTaskService(TaskService):
         result = await self.session.execute(query)
         task = result.scalars().first()
         if task:
-            raise SuchGitHubURLTaskExistError(message="Задача с таким github url уже существует")
+            raise AlreadyExistError(message="Задача с таким github url уже существует")
         task = await self._get_task_by_task_id(task_id)
         task.name = name
         task.system_instructions = system_instructions
@@ -94,7 +90,7 @@ class SqlAlchemyTaskService(TaskService):
         result = await self.session.execute(query)
         task = result.scalars().first()
         if task is None:
-            raise NoTaskError(message="Задачи с таким идентификатором не существует")
+            raise NotFoundError(message="Задачи с таким идентификатором не существует")
         return task
 
     @staticmethod

@@ -9,12 +9,10 @@ from src.infrastructure.sqlalchemy.models import Session, User
 from src.services.auth import (
     SESSION_TTL,
     AuthService,
-    InvalidPasswordError,
-    NoUserError,
     TokenDTO,
-    UserAlreadyExistError,
     UserDTO,
 )
+from src.services.exceptions import NotFoundError, InvalidPropertyError, AlreadyExistError
 from src.services.password import PasswordService
 
 
@@ -25,10 +23,10 @@ class SqlAlchemyAuthService(AuthService):
     async def login(self, login: str, password: str, user_agent: str) -> TokenDTO:
         user = await self._get_user_by_login(login)
         if not user:
-            raise NoUserError(message="Пользователь с таким именем не существует")
+            raise NotFoundError(message="Пользователь с таким именем не существует")
         is_verified = PasswordService.verify_password(password, user.hashed_password, user.salt)
         if not is_verified:
-            raise InvalidPasswordError(message="Пароль неправильный")
+            raise InvalidPropertyError(message="Пароль неправильный")
         expired_datetime = datetime.now() + timedelta(days=SESSION_TTL)
         session = Session(user_id=user.user_id, expired_at=expired_datetime, user_agent=user_agent)
         self.session.add(session)
@@ -39,7 +37,7 @@ class SqlAlchemyAuthService(AuthService):
     async def register(self, login: str, password: str, role: str) -> None:
         existing_user = await self._get_user_by_login(login)
         if existing_user:
-            raise UserAlreadyExistError(message="Пользователь с таким именем уже существует")
+            raise AlreadyExistError(message="Пользователь с таким именем уже существует")
         hashed_password, salt = PasswordService.create_hashed_password_and_salt(password)
         user = User(login=login, salt=salt, hashed_password=hashed_password, role=role)
         self.session.add(user)
@@ -50,9 +48,9 @@ class SqlAlchemyAuthService(AuthService):
         result = await self.session.execute(query)
         user = result.scalars().first()
         if not user:
-            raise NoUserError(message="Пользователь не найден")
+            raise NotFoundError(message="Пользователь не найден")
         if user.sessions[0].expired_at < datetime.now():
-            raise NoUserError(message="Требуется перезайти в аккаунт")
+            raise NotFoundError(message="Требуется перезайти в аккаунт")
         return UserDTO(
             user_id=str(user.user_id),
             login=user.login,

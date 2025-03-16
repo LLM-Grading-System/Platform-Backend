@@ -11,3 +11,7 @@ class StudentService(ABC):
     @abstractmethod
     async def create(self, telegram_user_id: int, telegram_username: str, github_username: str) -> None:
         raise NotImplementedError
+
+    @abstractmethod
+    async def get_by_github_username(self, github_username: str) -> StudentDTO:
+        raise NotImplementedError

@@ -4,7 +4,6 @@ from fastapi import APIRouter, Depends, Query, status
 from fastapi.responses import JSONResponse
 
 from src.api.auth.dependencies import get_user
-from src.api.exceptions import APIError
 from src.api.general_schemas import SuccessResponse
 from src.api.tasks.dependencies import get_task_service
 from src.api.tasks.schemas import (
@@ -14,7 +13,7 @@ from src.api.tasks.schemas import (
 )
 from src.api.utils import jsonify
 from src.services.auth import UserDTO
-from src.services.tasks import NoTaskError, SuchGitHubURLTaskExistError, TaskService
+from src.services.tasks import TaskService
 
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
@@ -31,22 +30,16 @@ async def create_task(
     _: Annotated[UserDTO, Depends(get_user)],
     task_service: Annotated[TaskService, Depends(get_task_service)],
 ) -> JSONResponse:
-    try:
-        task = await task_service.create_task(
-            name=data.name,
-            system_instructions=data.system_instructions,
-            ideas=data.ideas,
-            github_repo_url=data.github_repo_url,
-            level=data.level,
-            tags=data.tags,
-            is_draft=data.is_draft,
-        )
-        return jsonify(TaskResponse.from_dto(task), status_code=status.HTTP_201_CREATED)
-    except SuchGitHubURLTaskExistError as ex:
-        raise APIError(
-            message=ex.message,
-            status=status.HTTP_400_BAD_REQUEST,
-        ) from ex
+    task = await task_service.create_task(
+        name=data.name,
+        system_instructions=data.system_instructions,
+        ideas=data.ideas,
+        github_repo_url=data.github_repo_url,
+        level=data.level,
+        tags=data.tags,
+        is_draft=data.is_draft,
+    )
+    return jsonify(TaskResponse.from_dto(task), status_code=status.HTTP_201_CREATED)
 
 
 @router.get(
@@ -61,14 +54,8 @@ async def get_task(
     _: Annotated[UserDTO, Depends(get_user)],
     task_service: Annotated[TaskService, Depends(get_task_service)],
 ) -> JSONResponse:
-    try:
-        task = await task_service.get_task_by_task_id(task_id)
-        return jsonify(TaskResponse.from_dto(task))
-    except NoTaskError as ex:
-        raise APIError(
-            message=ex.message,
-            status=status.HTTP_404_NOT_FOUND,
-        ) from ex
+    task = await task_service.get_task_by_task_id(task_id)
+    return jsonify(TaskResponse.from_dto(task))
 
 
 @router.get(
@@ -81,17 +68,9 @@ async def get_task(
 async def get_all_tasks(
     _: Annotated[UserDTO, Depends(get_user)],
     task_service: Annotated[TaskService, Depends(get_task_service)],
-    gh_repo_url: str | None = Query(default=None),
 ) -> JSONResponse:
-    if gh_repo_url:
-        try:
-            task = await task_service.get_task_by_github_repository_url(gh_repo_url)
-            return jsonify([TaskResponse.from_dto(task)])
-        except NoTaskError:
-            return jsonify([])
-    else:
-        tasks = await task_service.get_all_tasks()
-        return jsonify([TaskResponse.from_dto(task) for task in tasks])
+    tasks = await task_service.get_all_tasks()
+    return jsonify([TaskResponse.from_dto(task) for task in tasks])
 
 
 @router.put(
@@ -107,28 +86,17 @@ async def edit_task(
     _: Annotated[UserDTO, Depends(get_user)],
     task_service: Annotated[TaskService, Depends(get_task_service)],
 ) -> JSONResponse:
-    try:
-        task = await task_service.edit_task_by_task_id(
-            task_id=task_id,
-            name=data.name,
-            system_instructions=data.system_instructions,
-            ideas=data.ideas,
-            github_repo_url=data.github_repo_url,
-            level=data.level,
-            tags=data.tags,
-            is_draft=data.is_draft,
-        )
-        return jsonify(TaskResponse.from_dto(task))
-    except NoTaskError as ex:
-        raise APIError(
-            message=ex.message,
-            status=status.HTTP_404_NOT_FOUND,
-        ) from ex
-    except SuchGitHubURLTaskExistError as ex:
-        raise APIError(
-            message=ex.message,
-            status=status.HTTP_400_BAD_REQUEST,
-        ) from ex
+    task = await task_service.edit_task_by_task_id(
+        task_id=task_id,
+        name=data.name,
+        system_instructions=data.system_instructions,
+        ideas=data.ideas,
+        github_repo_url=data.github_repo_url,
+        level=data.level,
+        tags=data.tags,
+        is_draft=data.is_draft,
+    )
+    return jsonify(TaskResponse.from_dto(task))
 
 
 @router.delete(
@@ -142,11 +110,5 @@ async def remove_task(
     _: Annotated[UserDTO, Depends(get_user)],
     task_service: Annotated[TaskService, Depends(get_task_service)],
 ) -> JSONResponse:
-    try:
-        await task_service.remove_task_by_task_id(task_id)
-        return jsonify(SuccessResponse(message="Задача успешно удалена"))
-    except NoTaskError as ex:
-        raise APIError(
-            message=ex.message,
-            status=status.HTTP_404_NOT_FOUND,
-        ) from ex
+    await task_service.remove_task_by_task_id(task_id)
+    return jsonify(SuccessResponse(message="Задача успешно удалена"))

@@ -1,4 +1,5 @@
 from fastapi import APIRouter, status
+from starlette.responses import JSONResponse
 
 from src.api.health.schemas import HealthResponse
 from src.api.utils import jsonify
@@ -12,5 +13,5 @@ router = APIRouter(tags=["monitoring"])
     description="Check health of service",
     summary="Health check",
 )
-def health_check() -> HealthResponse:
+def health_check() -> JSONResponse:
     return jsonify(HealthResponse(message="The service is alive"))

@@ -9,7 +9,8 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from src.api.exceptions import APIError
 from src.infrastructure.sqlalchemy.engine import get_async_session
 from src.infrastructure.sqlalchemy.services import SqlAlchemyAuthService
-from src.services.auth import AuthService, NoUserError, UserDTO
+from src.services.auth import AuthService, UserDTO
+from src.services.exceptions import NotFoundError
 
 
 def get_auth_service(
@@ -33,7 +34,7 @@ async def get_user(
 ) -> UserDTO:
     try:
         user = await auth_service.get_user(auth_token)
-    except NoUserError as ex:
+    except NotFoundError as ex:
         raise APIError(
             message=ex.message,
             status=status.HTTP_401_UNAUTHORIZED,
