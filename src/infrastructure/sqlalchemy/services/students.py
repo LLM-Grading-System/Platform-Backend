@@ -11,12 +11,14 @@ class SqlAlchemyStudentService(StudentService):
         self.session = session
 
     async def get_all(self, username: str = "") -> list[StudentDTO]:
-        query = select(Student).where(
-            or_(
-                col(Student.gh_username).ilike(f"%{username}%"),
-                col(Student.tg_username).ilike(f"%{username}%"),
+        query = select(Student)
+        if username:
+            query = query.where(
+                or_(
+                    col(Student.gh_username).ilike(f"%{username}%"),
+                    col(Student.tg_username).ilike(f"%{username}%"),
+                )
             )
-        )
         result = await self.session.execute(query)
         students = result.scalars().all()
         return [self.from_model_to_dto(student) for student in students]
