@@ -3,8 +3,8 @@
 ### Модель данных
 ```mermaid
 erDiagram
-    User {
-        UUID user_id PK
+    USERS {
+        UUID user_id
         string login
         string salt
         string hashed_password
@@ -12,67 +12,48 @@ erDiagram
         datetime created_at
     }
 
-    Session {
-        UUID session_id PK
-        UUID user_id FK
+    SESSIONS {
+        UUID session_id
+        UUID user_id
         datetime expired_at
         string user_agent
     }
 
-    Student {
-        UUID student_id PK
+    STUDENTS {
+        UUID student_id
         int tg_user_id
         string tg_username
         string gh_username
         datetime registered_at
     }
 
-    Task {
-        UUID task_id PK
+    TASKS {
+        UUID task_id
         string name
-        string description
+        string system_instructions
+        string ideas
         string gh_repo_url
         string level
         string tags
         bool is_draft
     }
 
-    Criteria {
-        UUID criteria_id PK
-        UUID task_id FK
-        string description
-        float weight
-        datetime created_at
-    }
-
-    Attempt {
-        UUID attempt_id PK
-        UUID task_id FK
-        UUID student_id FK
+    SUBMISSIONS {
+        UUID submission_id
+        UUID task_id
+        UUID student_id
         string gh_repo_url
-        float llm_grade
+        string code_file_name
+        string llm_grade
         string llm_feedback
-        float teacher_grade
-        string teacher_feedback
-        datetime created_at
+        string llm_report
         datetime evaluated_at
+        datetime created_at
     }
 
-    CriteriaFeedback {
-        UUID criteria_feedback_id PK
-        UUID attempt_id FK
-        UUID criteria_id FK
-        bool is_confirmed
-        string llm_feedback
-    }
-
-    %% Relationships
-    User ||--o{ Session : has
-    Student ||--o{ Attempt : makes
-    Task ||--o{ Criteria : has
-    Task ||--o{ Attempt : has
-    Attempt ||--o{ CriteriaFeedback : has
-    Criteria ||--o{ CriteriaFeedback : has
+    USERS ||--o{ SESSIONS : has
+    STUDENTS ||--o{ SUBMISSIONS : makes
+    TASKS ||--o{ SUBMISSIONS : receives
 ```
 
 ## Разработка
@@ -95,6 +76,7 @@ MINIO_ACCESS_KEY=access-key
 MINIO_SECRET_KEY=secret-key
 MINIO_BUCKET=submissions
 # Kafka
+KAFKA_BOOTSTRAP_SERVERS=localhost:29092
 KAFKA_UI_ADMIN_LOGIN=admin
 KAFKA_UI_ADMIN_PASSWORD=password
 ```
@@ -105,22 +87,19 @@ uv sync
 ```
 
 ### Запуск контейнеров для разработки
+Контейнер приложения запускается в reload-режиме для разработки
 ```bash
+docker compose -f dev.docker-compose.yaml build
 docker compose -f dev.docker-compose.yaml up -d
 ```
 
 ### Запуск в dev-режиме
 ```bash
-uv run fastapi dev src/app.py
+uv run fastapi dev src/app.py --port 8000
 ```
 
 ### Запуск форматтера и линтера с автофиксами
 ```bash
 uv run ruff format ./src
 uv run ruff check --fix src
-```
-
-### Запуск в production-режиме
-```bash
-uv run granian --interface asgi src.app:app
 ```
