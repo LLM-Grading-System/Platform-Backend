@@ -2,7 +2,7 @@ version: "3.9"
 services:
   postgres:
     image: postgres:14.8-alpine3.18
-    container_name: dev_postgres
+    container_name: dev_grading_postgres
     environment:
       PGDATA: "/var/lib/postgresql/data/pgdata"
     env_file: ".env"
@@ -20,7 +20,7 @@ services:
 
   minio:
     image: minio/minio:RELEASE.2025-02-28T09-55-16Z
-    container_name: dev_minio
+    container_name: dev_grading_minio
     command: server --console-address ":9001" /data/
     ports:
       - "9000:9000"
@@ -34,6 +34,67 @@ services:
       timeout: 20s
       retries: 3
     restart: unless-stopped
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: dev_grading_zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - 22181:2181
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: dev_grading_kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - 29092:29092
+    hostname: kafka
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui
+    container_name: dev_grading_kafka_ui
+    ports:
+      - 8090:8080
+    env_file: ".env"
+    restart: always
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=local
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:29092
+      - KAFKA_CLUSTERS_0_ZOOKEEPER=zookeeper:2181
+      - AUTH_TYPE="LOGIN_FORM"
+      - SPRING_SECURITY_USER_NAME=$KAFKA_UI_ADMIN_LOGIN
+      - SPRING_SECURITY_USER_PASSWORD=$KAFKA_UI_ADMIN_PASSWORD
+    links:
+      - kafka
+      - zookeeper
+
+  api:
+    build:
+      context: .
+      dockerfile: dev.Dockerfile
+    container_name: dev_api
+    ports:
+      - 8000:8000
+    env_file: ".env"
+    restart: always
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - MINIO_HOST=minio
+      - POSTGRES_HOST=postgres
+      - MODE=dev
+    volumes:
+      - ./src:/app/src
+
 
 volumes:
   grading_data:
