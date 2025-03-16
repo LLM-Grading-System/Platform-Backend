@@ -1,6 +1,8 @@
 from datetime import datetime
 from uuid import UUID, uuid4
 
+from sqlalchemy import func
+from sqlalchemy.orm import relationship
 from sqlmodel import Field, Relationship, SQLModel
 
 
@@ -34,7 +36,7 @@ class Student(SQLModel, table=True):
     student_id: UUID = Field(default_factory=uuid4, primary_key=True)
     tg_user_id: int = Field(nullable=False, unique=True)
     tg_username: str = Field(nullable=False)
-    gh_username: str = Field(nullable=False)
+    gh_username: str = Field(nullable=False, unique=True)
     registered_at: datetime = Field(default_factory=datetime.now)
 
 
@@ -51,17 +53,17 @@ class Task(SQLModel, table=True):
     is_draft: bool = Field(nullable=False)
 
 
-class Attempt(SQLModel, table=True):
-    __tablename__ = "attempts"
+class Submission(SQLModel, table=True):
+    __tablename__ = "submissions"
 
-    attempt_id: UUID = Field(default_factory=uuid4, primary_key=True)
+    submission_id: UUID = Field(default_factory=uuid4, primary_key=True)
     task_id: UUID = Field(foreign_key="tasks.task_id")
     student_id: UUID = Field(foreign_key="students.student_id")
     gh_repo_url: str = Field(nullable=False)
+    code_file_name: str = Field(nullable=False)
 
-    llm_grade: float = Field(nullable=False)
-    llm_feedback: str = Field(nullable=False)
-    teacher_grade: float = Field(nullable=False)
-    teacher_feedback: str = Field(nullable=False)
-    created_at: datetime = Field(default_factory=datetime.now)
+    llm_grade: str = Field(default="")
+    llm_feedback: str = Field(default="")
+    llm_report: str = Field(default="")
     evaluated_at: datetime | None = Field(default=None)
+    created_at: datetime = Field(default_factory=datetime.now)
