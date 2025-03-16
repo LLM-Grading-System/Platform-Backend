@@ -43,26 +43,12 @@ class Task(SQLModel, table=True):
 
     task_id: UUID = Field(default_factory=uuid4, primary_key=True)
     name: str = Field(nullable=False)
-    description: str = Field(nullable=False)
+    system_instructions: str = Field(nullable=False)
+    ideas: str = Field(nullable=False)
     gh_repo_url: str = Field(nullable=False, unique=True)
     level: str = Field(nullable=False)
     tags: str = Field(nullable=False)
     is_draft: bool = Field(nullable=False)
-
-    criteria: list["Criteria"] = Relationship(back_populates="task", cascade_delete=True)
-
-
-class Criteria(SQLModel, table=True):
-    __tablename__ = "criteria"
-
-    criteria_id: UUID = Field(default_factory=uuid4, primary_key=True)
-    task_id: UUID = Field(foreign_key="tasks.task_id")
-    description: str = Field(nullable=False)
-    weight: float = Field(nullable=False)
-    created_at: datetime = Field(default_factory=datetime.now)
-
-    task: Task = Relationship(back_populates="criteria")
-    feedbacks: list["CriteriaFeedback"] = Relationship(back_populates="criteria")
 
 
 class Attempt(SQLModel, table=True):
@@ -79,18 +65,3 @@ class Attempt(SQLModel, table=True):
     teacher_feedback: str = Field(nullable=False)
     created_at: datetime = Field(default_factory=datetime.now)
     evaluated_at: datetime | None = Field(default=None)
-
-    feedbacks: list["CriteriaFeedback"] = Relationship(back_populates="attempt")
-
-
-class CriteriaFeedback(SQLModel, table=True):
-    __tablename__ = "criteria_feedbacks"
-
-    criteria_feedback_id: UUID = Field(default_factory=uuid4, primary_key=True)
-    attempt_id: UUID = Field(foreign_key="attempts.attempt_id")
-    criteria_id: UUID = Field(foreign_key="criteria.criteria_id")
-    is_confirmed: bool = Field(nullable=False)
-    llm_feedback: str = Field(nullable=False)
-
-    attempt: Attempt = Relationship(back_populates="feedbacks")
-    criteria: Criteria = Relationship(back_populates="feedbacks")

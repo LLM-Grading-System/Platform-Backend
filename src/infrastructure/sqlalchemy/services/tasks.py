@@ -1,12 +1,10 @@
 from uuid import UUID
 
-from sqlmodel import desc, select
+from sqlmodel import select
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.infrastructure.sqlalchemy.models import Criteria, Task
+from src.infrastructure.sqlalchemy.models import Task
 from src.services.tasks import (
-    CriteriaDTO,
-    NoCriteriaError,
     NoTaskError,
     SuchGitHubURLTaskExistError,
     TaskDTO,
@@ -19,7 +17,7 @@ class SqlAlchemyTaskService(TaskService):
         self.session = session
 
     async def create_task(
-        self, name: str, description: str, github_repo_url: str, level: str, tags: list[str], is_draft: bool
+        self, name: str, system_instructions: str, ideas: str, github_repo_url: str, level: str, tags: list[str], is_draft: bool
     ) -> TaskDTO:
         query = select(Task).where(Task.gh_repo_url == github_repo_url)
         result = await self.session.execute(query)
@@ -28,7 +26,8 @@ class SqlAlchemyTaskService(TaskService):
             raise SuchGitHubURLTaskExistError(message="Задача с таким github url уже существует")
         task = Task(
             name=name,
-            description=description,
+            system_instructions=system_instructions,
+            ideas=ideas,
             gh_repo_url=github_repo_url,
             level=level,
             tags=",".join(tags),
@@ -61,7 +60,8 @@ class SqlAlchemyTaskService(TaskService):
         self,
         task_id: str,
         name: str,
-        description: str,
+        system_instructions: str,
+        ideas: str,
         github_repo_url: str,
         level: str,
         tags: list[str],
@@ -74,7 +74,8 @@ class SqlAlchemyTaskService(TaskService):
             raise SuchGitHubURLTaskExistError(message="Задача с таким github url уже существует")
         task = await self._get_task_by_task_id(task_id)
         task.name = name
-        task.description = description
+        task.system_instructions = system_instructions
+        task.ideas = ideas
         task.gh_repo_url = github_repo_url
         task.level = level
         task.tags = ",".join(tags)
@@ -88,32 +89,6 @@ class SqlAlchemyTaskService(TaskService):
         await self.session.delete(task)
         await self.session.commit()
 
-    async def get_criteria_by_task_id(self, task_id: str) -> list[CriteriaDTO]:
-        query = select(Criteria).where(Criteria.task_id == UUID(task_id)).order_by(desc(Criteria.created_at))
-        result = await self.session.execute(query)
-        criteria = result.scalars().all()
-        return [self.from_criteria_model_to_dto(criterion) for criterion in criteria]
-
-    async def add_criteria_for_task(self, task_id: str, description: str, weight: float) -> CriteriaDTO:
-        criterion = Criteria(task_id=UUID(task_id), description=description, weight=weight)
-        self.session.add(criterion)
-        await self.session.commit()
-        await self.session.refresh(criterion)
-        return self.from_criteria_model_to_dto(criterion)
-
-    async def edit_criteria_by_criteria_id(self, criteria_id: str, description: str, weight: float) -> CriteriaDTO:
-        criterion = await self._get_criteria_by_criteria_id(criteria_id)
-        criterion.description = description
-        criterion.weight = weight
-        await self.session.commit()
-        await self.session.refresh(criterion)
-        return self.from_criteria_model_to_dto(criterion)
-
-    async def remove_criteria_by_criteria_id(self, criteria_id: str) -> None:
-        criterion = await self._get_criteria_by_criteria_id(criteria_id)
-        await self.session.delete(criterion)
-        await self.session.commit()
-
     async def _get_task_by_task_id(self, task_id: str) -> Task:
         query = select(Task).where(Task.task_id == UUID(task_id))
         result = await self.session.execute(query)
@@ -122,32 +97,15 @@ class SqlAlchemyTaskService(TaskService):
             raise NoTaskError(message="Задачи с таким идентификатором не существует")
         return task
 
-    async def _get_criteria_by_criteria_id(self, criteria_id: str) -> Criteria:
-        query = select(Criteria).where(Criteria.criteria_id == UUID(criteria_id))
-        result = await self.session.execute(query)
-        criterion = result.scalars().first()
-        if criterion is None:
-            raise NoCriteriaError(message="Критерия с таким идентификатором не существует")
-        return criterion
-
     @staticmethod
     def from_model_to_dto(model: Task) -> TaskDTO:
         return TaskDTO(
             task_id=str(model.task_id),
             name=model.name,
-            description=model.description,
+            system_instructions=model.system_instructions,
+            ideas=model.ideas,
             github_repo_url=model.gh_repo_url,
             level=model.level,
             tags=model.tags.split(",") if model.tags else [],
             is_draft=model.is_draft,
-        )
-
-    @staticmethod
-    def from_criteria_model_to_dto(model: Criteria) -> CriteriaDTO:
-        return CriteriaDTO(
-            criteria_id=str(model.criteria_id),
-            task_id=str(model.task_id),
-            description=model.description,
-            weight=model.weight,
-            created_at=model.created_at,
         )

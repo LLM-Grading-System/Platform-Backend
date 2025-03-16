@@ -77,6 +77,28 @@ erDiagram
 
 ## Разработка
 
+### Переменные окружения
+```bash
+MODE=dev
+# Postgres Envs
+POSTGRES_DB=grading
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=password
+POSTGRES_PORT=5432
+POSTGRES_HOST=localhost
+# Minio Envs
+MINIO_PORT=9000
+MINIO_HOST=localhost
+MINIO_ROOT_USER=minio
+MINIO_ROOT_PASSWORD=password
+MINIO_ACCESS_KEY=access-key
+MINIO_SECRET_KEY=secret-key
+MINIO_BUCKET=submissions
+# Kafka
+KAFKA_UI_ADMIN_LOGIN=admin
+KAFKA_UI_ADMIN_PASSWORD=password
+```
+
 ### Установка библиотек с uv
 ```bash
 uv sync

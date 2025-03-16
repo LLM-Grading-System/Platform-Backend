@@ -28,5 +28,4 @@ async def init_database() -> None:
     engine = create_async_engine(url=app_settings.db_url, echo=app_settings.is_dev)
     await create_tables(engine)
 
-    login, password = "admin", "password"
-    await create_admin_user(engine, login, password)
+    await create_admin_user(engine, app_settings.ADMIN_USER, app_settings.ADMIN_PASSWORD)
