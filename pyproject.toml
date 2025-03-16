@@ -4,8 +4,10 @@ version = "0.1.0"
 description = "Add your description here"
 requires-python = ">=3.11"
 dependencies = [
+    "aiohttp>=3.11.13",
     "asyncpg>=0.30.0",
     "fastapi[standard]>=0.115.8",
+    "faststream[kafka]>=0.5.35",
     "granian>=1.7.6",
     "miniopy-async>=1.21.1",
     "pydantic-settings>=2.8.0",

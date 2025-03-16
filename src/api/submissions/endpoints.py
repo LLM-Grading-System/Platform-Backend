@@ -5,15 +5,19 @@ from typing import Annotated
 
 import aiohttp
 from fastapi import APIRouter, File, UploadFile, Depends, status, Header, Body, Path
+from faststream.kafka import KafkaBroker
 from starlette.responses import JSONResponse
 from miniopy_async import Minio
 
 from src.api.auth.dependencies import get_user
 from src.api.students.dependencies import get_student_service
+from src.api.submissions.dependencies import get_submission_service
+from src.api.submissions.events import SUBMISSION_TOPIC, SubmissionEventSchema
 from src.api.submissions.schemas import SubmissionResponse, EvaluationSubmissionRequest
 from src.api.tasks.dependencies import get_task_service
 from src.api.utils import jsonify
 from src.api.general_schemas import SuccessResponse
+from src.infrastructure.faststream.dependencies import get_broker
 from src.infrastructure.minio.client import get_s3_client
 from src.services.auth import UserDTO
 from src.services.exceptions import NotFoundError
@@ -64,9 +68,10 @@ async def evaluate_submission(
     summary="Create submissions",
 )
 async def create_submission(
+    broker: Annotated[KafkaBroker, Depends(get_broker)],
     task_service: Annotated[TaskService, Depends(get_task_service)],
     student_service: Annotated[StudentService, Depends(get_student_service)],
-    submission_service: Annotated[SubmissionService, Depends(get_student_service)],
+    submission_service: Annotated[SubmissionService, Depends(get_submission_service)],
     client: Annotated[Minio, Depends(get_s3_client)],
     autotests_log: UploadFile = File(...),
     linters_log: UploadFile = File(...),
@@ -111,6 +116,8 @@ async def create_submission(
     submission = await submission_service.create_submission(
         task.task_id, student.student_id, current_repository_url, code_filename
     )
+
+    await broker.publish(SubmissionEventSchema(submission_id=submission.submission_id), topic=SUBMISSION_TOPIC)
 
     return jsonify(SuccessResponse(message=f"Заявка на проверку создана, ее номер: {submission.submission_id}, пожалуйста ожидайте обратной связи"), status_code=status.HTTP_201_CREATED)
 

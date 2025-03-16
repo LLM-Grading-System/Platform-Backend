@@ -11,6 +11,8 @@ class ApplicationMode(Enum):
 
 class AppSettings(BaseSettings):
     MODE: ApplicationMode = Field(default=ApplicationMode.DEVELOPMENT)
+    ADMIN_USER: str = Field(default="admin")
+    ADMIN_PASSWORD: str = Field(default="password")
 
     @property
     def is_dev(self) -> bool:
@@ -55,6 +57,8 @@ class AppSettings(BaseSettings):
     def s3_endpoint(self) -> str:
         """Get S3 endpoint."""
         return f"{self.MINIO_HOST}:{self.MINIO_PORT}"
+
+    KAFKA_BOOTSTRAP_SERVERS: str = Field(default="localhost:29092")
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

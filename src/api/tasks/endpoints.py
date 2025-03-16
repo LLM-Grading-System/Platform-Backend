@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query, status, Path
 from fastapi.responses import JSONResponse
 
 from src.api.auth.dependencies import get_user
@@ -81,10 +81,10 @@ async def get_all_tasks(
     summary="Edit Task",
 )
 async def edit_task(
-    task_id: str,
     data: EditTaskRequest,
     _: Annotated[UserDTO, Depends(get_user)],
     task_service: Annotated[TaskService, Depends(get_task_service)],
+    task_id: str = Path(),
 ) -> JSONResponse:
     task = await task_service.edit_task_by_task_id(
         task_id=task_id,
