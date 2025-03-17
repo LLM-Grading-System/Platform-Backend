@@ -117,7 +117,13 @@ async def create_submission(
         task.task_id, student.student_id, current_repository_url, code_filename
     )
 
-    await broker.publish(SubmissionEventSchema(submission_id=submission.submission_id), topic=SUBMISSION_TOPIC)
+    await broker.publish(
+        SubmissionEventSchema(
+            submission_id=submission.submission_id,
+            task_id=task.task_id,
+            code_filename=code_filename,
+        ), topic=SUBMISSION_TOPIC
+    )
 
     return jsonify(SuccessResponse(message=f"Заявка на проверку создана, ее номер: {submission.submission_id}, пожалуйста ожидайте обратной связи"), status_code=status.HTTP_201_CREATED)
 

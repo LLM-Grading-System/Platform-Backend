@@ -103,3 +103,7 @@ uv run fastapi dev src/app.py --port 8000
 uv run ruff format ./src
 uv run ruff check --fix src
 ```
+
+### Тестирование
+- GitHub owner: ashishpatel26
+- GitHub repo: vectordb-recipes
