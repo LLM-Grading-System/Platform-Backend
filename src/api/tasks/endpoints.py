@@ -9,7 +9,7 @@ from src.api.tasks.dependencies import get_task_service
 from src.api.tasks.schemas import (
     CreateTaskRequest,
     EditTaskRequest,
-    TaskResponse,
+    TaskResponse, TaskPromptResponse,
 )
 from src.api.utils import jsonify
 from src.services.auth import UserDTO
@@ -56,6 +56,22 @@ async def get_task(
 ) -> JSONResponse:
     task = await task_service.get_task_by_task_id(task_id)
     return jsonify(TaskResponse.from_dto(task))
+
+
+@router.get(
+    "/{task_id}/prompt",
+    response_model=TaskResponse,
+    status_code=status.HTTP_200_OK,
+    description="Get task prompt by task ID",
+    summary="Get Task Prompt",
+)
+async def get_task_prompt(
+    task_id: str,
+    task_service: Annotated[TaskService, Depends(get_task_service)],
+) -> JSONResponse:
+    task = await task_service.get_task_by_task_id(task_id)
+    return jsonify(TaskPromptResponse.from_dto(task))
+
 
 
 @router.get(

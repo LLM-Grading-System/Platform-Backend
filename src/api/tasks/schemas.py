@@ -30,6 +30,16 @@ class TaskResponse(BaseSchema):
         )
 
 
+class TaskPromptResponse(BaseSchema):
+    system_instructions: str
+
+    @staticmethod
+    def from_dto(task: TaskDTO) -> "TaskPromptResponse":
+        return TaskPromptResponse(
+            system_instructions=task.system_instructions,
+        )
+
+
 class CreateTaskRequest(BaseSchema):
     name: str
     system_instructions: str
