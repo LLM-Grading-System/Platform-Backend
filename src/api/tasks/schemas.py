@@ -32,11 +32,13 @@ class TaskResponse(BaseSchema):
 
 class TaskPromptResponse(BaseSchema):
     system_instructions: str
+    github_repo_url: str
 
     @staticmethod
     def from_dto(task: TaskDTO) -> "TaskPromptResponse":
         return TaskPromptResponse(
             system_instructions=task.system_instructions,
+            github_repo_url=task.github_repo_url,
         )
 
 
