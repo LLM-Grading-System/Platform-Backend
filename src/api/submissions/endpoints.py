@@ -1,4 +1,5 @@
 import io
+import json
 import uuid
 import zipfile
 from typing import Annotated
@@ -38,7 +39,7 @@ router = APIRouter(prefix="/submissions", tags=["submissions"])
 )
 async def get_submissions(
     _: Annotated[UserDTO, Depends(get_user)],
-    submission_service: Annotated[SubmissionService, Depends(get_student_service)],
+    submission_service: Annotated[SubmissionService, Depends(get_submission_service)],
 ) -> JSONResponse:
     submissions = await submission_service.get_all_submissions()
     return jsonify([SubmissionResponse.from_dto(submission) for submission in submissions])
@@ -52,11 +53,11 @@ async def get_submissions(
     summary="Update submission",
 )
 async def evaluate_submission(
-    submission_service: Annotated[SubmissionService, Depends(get_student_service)],
+    submission_service: Annotated[SubmissionService, Depends(get_submission_service)],
     submission_id: str = Path(),
     data: EvaluationSubmissionRequest = Body(),
 ) -> JSONResponse:
-    await submission_service.evaluate_submission(submission_id, data.llm_grade, data.llm_feedback, data.llm_report)
+    await submission_service.evaluate_submission(submission_id, data.llm_grade, data.llm_feedback, json.dumps(data.llm_report))
     return jsonify(SuccessResponse(message="Вердикт успешно сохранен"))
 
 

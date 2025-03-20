@@ -38,4 +38,4 @@ class SubmissionResponse(BaseSchema):
 class EvaluationSubmissionRequest(BaseSchema):
     llm_grade: str
     llm_feedback: str
-    llm_report: str
+    llm_report: dict

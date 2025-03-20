@@ -16,8 +16,8 @@ class SqlAlchemySubmissionService(SubmissionService):
     async def get_all_submissions(self) -> list[SubmissionDTO]:
         query = select(Submission)
         result = await self.session.execute(query)
-        tasks = result.scalars().all()
-        return [self.from_model_to_dto(task) for task in tasks]
+        submissions = result.scalars().all()
+        return [self.from_model_to_dto(submission) for submission in submissions]
 
     async def create_submission(self, task_id: str, student_id: str, github_repo_url: str, code_file_name: str) -> SubmissionDTO:
         submission = Submission(
@@ -50,7 +50,7 @@ class SqlAlchemySubmissionService(SubmissionService):
     @staticmethod
     def from_model_to_dto(model: Submission) -> SubmissionDTO:
         return SubmissionDTO(
-            submission_id=str(model.task_id),
+            submission_id=str(model.submission_id),
             task_id=str(model.task_id),
             student_id=str(model.student_id),
             gh_repo_url=model.gh_repo_url,
