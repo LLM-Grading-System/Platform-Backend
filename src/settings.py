@@ -46,8 +46,6 @@ class AppSettings(BaseSettings):
         )
 
     MINIO_BUCKET: str = Field(default="submissions")
-    MINIO_ROOT_USER: str = Field(default="minio")
-    MINIO_ROOT_PASSWORD: str = Field(default="password")
     MINIO_ACCESS_KEY: str = Field(default="access_key")
     MINIO_SECRET_KEY: str = Field(default="secret")
     MINIO_HOST: str = Field(default="localhost")

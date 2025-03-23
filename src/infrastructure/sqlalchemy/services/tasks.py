@@ -46,8 +46,10 @@ class SqlAlchemyTaskService(TaskService):
         task = await self._get_task_by_task_id(task_id)
         return self.from_model_to_dto(task)
 
-    async def get_all_tasks(self) -> list[TaskDTO]:
+    async def get_all_tasks(self, public_only: bool = False) -> list[TaskDTO]:
         query = select(Task)
+        if public_only:
+            query = query.where(Task.is_draft == False)
         result = await self.session.execute(query)
         tasks = result.scalars().all()
         return [self.from_model_to_dto(task) for task in tasks]

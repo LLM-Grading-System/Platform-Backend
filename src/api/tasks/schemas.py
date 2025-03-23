@@ -30,6 +30,18 @@ class TaskResponse(BaseSchema):
         )
 
 
+class ShortTaskResponse(BaseSchema):
+    task_id: str = Field(examples=[str(uuid4())])
+    name: str
+
+    @staticmethod
+    def from_dto(task: TaskDTO) -> "ShortTaskResponse":
+        return ShortTaskResponse(
+            task_id=task.task_id,
+            name=task.name,
+        )
+
+
 class TaskPromptResponse(BaseSchema):
     system_instructions: str
     github_repo_url: str

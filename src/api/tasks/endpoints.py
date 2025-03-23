@@ -9,7 +9,7 @@ from src.api.tasks.dependencies import get_task_service
 from src.api.tasks.schemas import (
     CreateTaskRequest,
     EditTaskRequest,
-    TaskResponse, TaskPromptResponse,
+    TaskResponse, TaskPromptResponse, ShortTaskResponse,
 )
 from src.api.utils import jsonify
 from src.services.auth import UserDTO
@@ -40,6 +40,20 @@ async def create_task(
         is_draft=data.is_draft,
     )
     return jsonify(TaskResponse.from_dto(task), status_code=status.HTTP_201_CREATED)
+
+
+@router.get(
+    "/public",
+    response_model=list[ShortTaskResponse],
+    status_code=status.HTTP_200_OK,
+    description="Get all tasks",
+    summary="Get All Tasks",
+)
+async def get_all_tasks(
+    task_service: Annotated[TaskService, Depends(get_task_service)],
+) -> JSONResponse:
+    tasks = await task_service.get_all_tasks(public_only=True)
+    return jsonify([ShortTaskResponse.from_dto(task) for task in tasks])
 
 
 @router.get(

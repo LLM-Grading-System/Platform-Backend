@@ -19,7 +19,7 @@ class TaskService(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def get_all_tasks(self) -> list[TaskDTO]:
+    async def get_all_tasks(self, public_only: bool = False) -> list[TaskDTO]:
         raise NotImplementedError
 
     @abstractmethod
