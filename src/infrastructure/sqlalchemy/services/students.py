@@ -34,9 +34,14 @@ class SqlAlchemyStudentService(StudentService):
     async def get_by_github_username(self, github_username: str) -> StudentDTO:
         student = await self._get_student_by_github_username(github_username)
         if not student:
-            raise NotFoundError(f"Студента с привязанным GitHub профилем {student} не существует")
+            raise NotFoundError(f"Студента с привязанным GitHub профилем {github_username} не существует")
         return self.from_model_to_dto(student)
 
+    async def get_by_telegram_user_id(self, telegram_user_id: int) -> StudentDTO:
+        student = await self._get_student_by_telegram_user_id(telegram_user_id)
+        if not student:
+            raise NotFoundError(f"Студента с привязанным Telegram профилем не существует")
+        return self.from_model_to_dto(student)
 
     @staticmethod
     def from_model_to_dto(model: Student) -> StudentDTO:

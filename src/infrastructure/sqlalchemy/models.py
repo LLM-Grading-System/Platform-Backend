@@ -67,3 +67,14 @@ class Submission(SQLModel, table=True):
     llm_report: str = Field(default="")
     evaluated_at: datetime | None = Field(default=None)
     created_at: datetime = Field(default_factory=datetime.now)
+
+
+class Complaint(SQLModel, table=True):
+    __tablename__ = "complaints"
+
+    complaint_id: UUID = Field(default_factory=uuid4, primary_key=True)
+    task_id: UUID = Field(foreign_key="tasks.task_id")
+    student_id: UUID = Field(foreign_key="students.student_id")
+    student_request: str = Field(nullable=False)
+    teacher_response: str = Field(nullable=False, default="")
+    created_at: datetime = Field(default_factory=datetime.now)
