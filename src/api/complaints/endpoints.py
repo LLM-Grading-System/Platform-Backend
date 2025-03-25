@@ -2,7 +2,9 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, status, Body, Path, Request
 from starlette.responses import JSONResponse
+from faststream.kafka import KafkaBroker
 
+from src.api.complaints.events import COMPLAINT_ANSWER_TOPIC, ComplaintAnswerEventSchema
 from src.services.auth import UserDTO
 from src.services.complaints import ComplaintService
 from src.services.stundents import StudentService
@@ -12,6 +14,7 @@ from src.api.students.dependencies import get_student_service
 from src.api.complaints.schemas import ComplaintResponse, CreateComplaintRequest, CreateAnswerRequest
 from src.api.utils import jsonify
 from src.api.general_schemas import SuccessResponse
+from src.infrastructure.faststream.dependencies import get_broker
 
 
 router = APIRouter(prefix="/complaints", tags=["complaints"])
@@ -53,17 +56,27 @@ async def create_student_complaint(
     "/{complaint_id}/answer",
     response_model=SuccessResponse,
     status_code=status.HTTP_200_OK,
-    description="Create complaint",
-    summary="Create complaint",
+    description="Create complaint answer",
+    summary="Create complaint answer",
 )
 async def answer_complaint(
     _: Annotated[UserDTO, Depends(get_user)],
+    broker: Annotated[KafkaBroker, Depends(get_broker)],
     complaint_service: Annotated[ComplaintService, Depends(get_complaint_service)],
+    student_service: Annotated[StudentService, Depends(get_student_service)],
     complaint_id: str = Path(),
     data: CreateAnswerRequest = Body(),
 ) -> JSONResponse:
     await complaint_service.answer_complaint(complaint_id, data.teacher_response)
-    return jsonify(SuccessResponse(message="Ответ на жалобу успешно зарегистрирован"))
+    complaint_dto = await complaint_service.get_complaint_by_id(complaint_id)
+    student_dto = await student_service.get_by_id(complaint_dto.student_id)
+    await broker.publish(
+        ComplaintAnswerEventSchema(
+            student_telegram_user_id=student_dto.telegram_user_id,
+            answer=data.teacher_response,
+        ), topic=COMPLAINT_ANSWER_TOPIC
+    )
+    return jsonify(SuccessResponse(message="Ответ на жалобу успешно зарегистрирован и отправлен"))
 
 
 @router.get(

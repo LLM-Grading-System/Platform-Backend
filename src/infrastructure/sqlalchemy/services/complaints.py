@@ -44,9 +44,9 @@ class SqlAlchemyComplaintService(ComplaintService):
         )
 
     async def _get_complaint_by_id(self, complaint_id: str) -> Complaint:
-        query = select(Complaint).where(Complaint.complaint_id == complaint_id)
+        query = select(Complaint).where(Complaint.complaint_id == UUID(complaint_id))
         result = await self.session.execute(query)
         complaint = result.scalar_one_or_none()
-        if complaint:
+        if not complaint:
             raise NotFoundError(f"Жалоба с ID {complaint_id} не найдена")
         return complaint
