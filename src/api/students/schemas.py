@@ -9,6 +9,8 @@ from src.services.stundents import StudentDTO
 class CreateStudentRequest(BaseSchema):
     telegram_user_id: int = Field(examples=[42353453])
     telegram_username: str = Field(examples=["nikita"])
+
+class SetGithubRequest(BaseSchema):
     github_username: str = Field(examples=["Nicki"])
 
 

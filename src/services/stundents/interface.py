@@ -9,7 +9,11 @@ class StudentService(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def create(self, telegram_user_id: int, telegram_username: str, github_username: str) -> None:
+    async def create(self, telegram_user_id: int, telegram_username: str) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def set_github_username(self, telegram_user_id: int,github_username: str) -> None:
         raise NotImplementedError
 
     @abstractmethod

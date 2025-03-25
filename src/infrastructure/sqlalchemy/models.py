@@ -36,7 +36,7 @@ class Student(SQLModel, table=True):
     student_id: UUID = Field(default_factory=uuid4, primary_key=True)
     tg_user_id: int = Field(nullable=False, unique=True)
     tg_username: str = Field(nullable=False)
-    gh_username: str = Field(nullable=False, unique=True)
+    gh_username: str = Field(nullable=True, default=None, unique=True)
     registered_at: datetime = Field(default_factory=datetime.now)
 
 

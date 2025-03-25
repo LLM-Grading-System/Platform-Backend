@@ -23,12 +23,22 @@ class SqlAlchemyStudentService(StudentService):
         students = result.scalars().all()
         return [self.from_model_to_dto(student) for student in students]
 
-    async def create(self, telegram_user_id: int, telegram_username: str, github_username: str) -> None:
+    async def create(self, telegram_user_id: int, telegram_username: str) -> None:
         existing_student = await self._get_student_by_telegram_user_id(telegram_user_id)
         if existing_student:
             raise AlreadyExistError("Студент с таким профилем в телеграмме уже зарегистрирован")
-        student = Student(tg_user_id=telegram_user_id, tg_username=telegram_username, gh_username=github_username)
+        student = Student(tg_user_id=telegram_user_id, tg_username=telegram_username)
         self.session.add(student)
+        await self.session.commit()
+
+    async def set_github_username(self, telegram_user_id: int, github_username: str) -> None:
+        student = await self._get_student_by_telegram_user_id(telegram_user_id)
+        if not student:
+            raise NotFoundError(f"Студента с привязанным Telegram профилем не существует")
+        existing_student = await self._get_student_by_github_username(github_username)
+        if existing_student:
+            raise AlreadyExistError("Студент с таким GitHub профилем уже зарегистрирован")
+        student.gh_username = github_username
         await self.session.commit()
 
     async def get_by_github_username(self, github_username: str) -> StudentDTO:
