@@ -53,6 +53,14 @@ class SqlAlchemyStudentService(StudentService):
             raise NotFoundError(f"Студента с привязанным Telegram профилем не существует")
         return self.from_model_to_dto(student)
 
+    async def get_by_id(self, student_id: str) -> StudentDTO:
+        query = select(Student).where(Student.student_id == student_id)
+        result = await self.session.execute(query)
+        student = result.scalars().first()
+        if not student:
+            raise NotFoundError(f"Студента с таким идентификатором не существует")
+        return self.from_model_to_dto(student)
+
     @staticmethod
     def from_model_to_dto(model: Student) -> StudentDTO:
         return StudentDTO(

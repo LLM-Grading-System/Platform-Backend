@@ -44,13 +44,18 @@ class SqlAlchemyAuthService(AuthService):
         await self.session.commit()
 
     async def get_user(self, session_id: str) -> UserDTO:
-        query = select(User).options(joinedload(User.sessions)).where(Session.session_id == UUID(session_id))
+        # Check user
+        query = select(User).join(Session).where(Session.session_id == UUID(session_id))
         result = await self.session.execute(query)
-        user = result.scalars().first()
+        user = result.scalar_one_or_none()
         if not user:
             raise NotFoundError(message="Пользователь не найден")
-        if user.sessions[0].expired_at < datetime.now():
-            raise NotFoundError(message="Требуется перезайти в аккаунт")
+        # Check session
+        query = select(Session).where(Session.session_id == UUID(session_id))
+        result = await self.session.execute(query)
+        session = result.scalar_one_or_none()
+        if session.expired_at < datetime.now():
+            raise NotFoundError(message="Срок действия сессии истек, требуется перезайти в аккаунт")
         return UserDTO(
             user_id=str(user.user_id),
             login=user.login,

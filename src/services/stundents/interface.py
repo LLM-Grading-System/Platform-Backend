@@ -23,3 +23,7 @@ class StudentService(ABC):
     @abstractmethod
     async def get_by_telegram_user_id(self, telegram_user_id: int) -> StudentDTO:
         raise NotImplementedError
+
+    @abstractmethod
+    async def get_by_id(self, student_id: str) -> StudentDTO:
+        raise NotImplementedError
