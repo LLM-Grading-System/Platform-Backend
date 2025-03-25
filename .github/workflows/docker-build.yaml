@@ -34,5 +34,5 @@ jobs:
           file: Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_REPO_NAME }}:latest
             ${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_REPO_NAME }}:${{ github.sha }}
+            ${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_REPO_NAME }}:latest
