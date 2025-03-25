@@ -4,7 +4,7 @@
 ```mermaid
 erDiagram
     USERS {
-        UUID user_id
+        UUID user_id PK
         string login
         string salt
         string hashed_password
@@ -13,14 +13,14 @@ erDiagram
     }
 
     SESSIONS {
-        UUID session_id
-        UUID user_id
+        UUID session_id PK
+        UUID user_id FK
         datetime expired_at
         string user_agent
     }
 
     STUDENTS {
-        UUID student_id
+        UUID student_id PK
         int tg_user_id
         string tg_username
         string gh_username
@@ -28,7 +28,7 @@ erDiagram
     }
 
     TASKS {
-        UUID task_id
+        UUID task_id PK
         string name
         string system_instructions
         string ideas
@@ -39,9 +39,9 @@ erDiagram
     }
 
     SUBMISSIONS {
-        UUID submission_id
-        UUID task_id
-        UUID student_id
+        UUID submission_id PK
+        UUID task_id FK
+        UUID student_id FK
         string gh_repo_url
         string code_file_name
         string llm_grade
@@ -51,9 +51,20 @@ erDiagram
         datetime created_at
     }
 
+    COMPLAINTS {
+        UUID complaint_id PK
+        UUID task_id FK
+        UUID student_id FK
+        string student_request
+        string teacher_response
+        datetime created_at
+    }
+
     USERS ||--o{ SESSIONS : has
     STUDENTS ||--o{ SUBMISSIONS : makes
     TASKS ||--o{ SUBMISSIONS : receives
+    TASKS ||--o{ COMPLAINTS : receives
+    STUDENTS ||--o{ COMPLAINTS : makes
 ```
 
 ## Разработка
