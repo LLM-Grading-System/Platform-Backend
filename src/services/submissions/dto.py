@@ -8,6 +8,7 @@ class SubmissionDTO:
     task_id: str
     student_id: str
     gh_repo_url: str
+    gh_pull_request_number: int
     code_file_name: str
 
     llm_grade: str

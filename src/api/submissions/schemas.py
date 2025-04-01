@@ -11,6 +11,7 @@ class SubmissionResponse(BaseSchema):
     task_id: str = Field(examples=[str(uuid4())])
     student_id: str = Field(examples=[str(uuid4())])
     gh_repo_url: str
+    gh_pull_request_number: int
     code_file_name: str
 
     llm_grade: str
@@ -26,6 +27,7 @@ class SubmissionResponse(BaseSchema):
             task_id=submission.task_id,
             student_id=submission.student_id,
             gh_repo_url=submission.gh_repo_url,
+            gh_pull_request_number=submission.gh_pull_request_number,
             code_file_name=submission.code_file_name,
             llm_grade=submission.llm_grade,
             llm_feedback=submission.llm_feedback,

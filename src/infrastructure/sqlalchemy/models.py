@@ -60,6 +60,7 @@ class Submission(SQLModel, table=True):
     task_id: UUID = Field(foreign_key="tasks.task_id")
     student_id: UUID = Field(foreign_key="students.student_id")
     gh_repo_url: str = Field(nullable=False)
+    gh_pull_request_number: int = Field(nullable=False)
     code_file_name: str = Field(nullable=False)
 
     llm_grade: str = Field(default="")

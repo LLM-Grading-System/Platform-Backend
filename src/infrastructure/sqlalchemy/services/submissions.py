@@ -19,11 +19,12 @@ class SqlAlchemySubmissionService(SubmissionService):
         submissions = result.scalars().all()
         return [self.from_model_to_dto(submission) for submission in submissions]
 
-    async def create_submission(self, task_id: str, student_id: str, github_repo_url: str, code_file_name: str) -> SubmissionDTO:
+    async def create_submission(self, task_id: str, student_id: str, github_repo_url: str, github_pull_request_number: int, code_file_name: str) -> SubmissionDTO:
         submission = Submission(
             task_id=UUID(task_id),
             student_id=UUID(student_id),
             gh_repo_url=github_repo_url,
+            gh_pull_request_number=github_pull_request_number,
             code_file_name=code_file_name,
         )
         self.session.add(submission)
@@ -31,13 +32,15 @@ class SqlAlchemySubmissionService(SubmissionService):
         await self.session.refresh(submission)
         return self.from_model_to_dto(submission)
 
-    async def evaluate_submission(self, submission_id: str, llm_grade: str, llm_feedback: str, llm_report: str) -> None:
+    async def evaluate_submission(self, submission_id: str, llm_grade: str, llm_feedback: str, llm_report: str) -> SubmissionDTO:
         submission = await self._get_submission_by_submission_id(submission_id)
         submission.llm_grade = llm_grade
         submission.llm_feedback = llm_feedback
         submission.llm_report = llm_report
         submission.evaluated_at = datetime.now()
         await self.session.commit()
+        await self.session.refresh(submission)
+        return self.from_model_to_dto(submission)
 
     async def _get_submission_by_submission_id(self, submission_id: str) -> Submission:
         query = select(Submission).where(Submission.submission_id == UUID(submission_id))
@@ -54,6 +57,7 @@ class SqlAlchemySubmissionService(SubmissionService):
             task_id=str(model.task_id),
             student_id=str(model.student_id),
             gh_repo_url=model.gh_repo_url,
+            gh_pull_request_number=model.gh_pull_request_number,
             code_file_name=model.code_file_name,
             llm_grade=model.llm_grade,
             llm_feedback=model.llm_feedback,

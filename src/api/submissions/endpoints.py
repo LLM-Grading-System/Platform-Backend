@@ -13,7 +13,7 @@ from miniopy_async import Minio
 from src.api.auth.dependencies import get_user
 from src.api.students.dependencies import get_student_service
 from src.api.submissions.dependencies import get_submission_service
-from src.api.submissions.events import SUBMISSION_TOPIC, SubmissionEventSchema
+from src.api.submissions.events import SUBMISSION_TOPIC, SubmissionEventSchema, CreateCommentRequest
 from src.api.submissions.schemas import SubmissionResponse, EvaluationSubmissionRequest
 from src.api.tasks.dependencies import get_task_service
 from src.api.utils import jsonify
@@ -53,11 +53,22 @@ async def get_submissions(
     summary="Update submission",
 )
 async def evaluate_submission(
+    broker: Annotated[KafkaBroker, Depends(get_broker)],
     submission_service: Annotated[SubmissionService, Depends(get_submission_service)],
     submission_id: str = Path(),
     data: EvaluationSubmissionRequest = Body(),
 ) -> JSONResponse:
-    await submission_service.evaluate_submission(submission_id, data.llm_grade, data.llm_feedback, json.dumps(data.llm_report))
+    submission_dto = await submission_service.evaluate_submission(submission_id, data.llm_grade, data.llm_feedback, json.dumps(data.llm_report))
+    parts = submission_dto.gh_repo_url.split('/')
+    gh_username, gh_repo_name =  parts[3], parts[4]
+    await broker.publish(
+        CreateCommentRequest(
+            username=gh_username,
+            repo_name=gh_repo_name,
+            pull_request_number=submission_dto.gh_pull_request_number,
+            comment=submission_dto.llm_feedback
+        ), topic=SUBMISSION_TOPIC
+    )
     return jsonify(SuccessResponse(message="Вердикт успешно сохранен"))
 
 
@@ -79,6 +90,7 @@ async def create_submission(
     code: UploadFile = File(...),
     github_owner: str = Header(default="", alias="X-GitHub-Owner"),
     github_repository: str = Header(default="", alias="X-GitHub-Repository"),
+    github_pull_request_number: int = Header(default="", alias="X-GitHub-Pull-Request-Number"),
 ) -> JSONResponse:
     github_repo_api_url = f"https://api.github.com/repos/{github_owner}/{github_repository}"
     async with aiohttp.ClientSession() as session:
@@ -115,7 +127,7 @@ async def create_submission(
     )
 
     submission = await submission_service.create_submission(
-        task.task_id, student.student_id, current_repository_url, code_filename
+        task.task_id, student.student_id, current_repository_url, github_pull_request_number, code_filename
     )
 
     await broker.publish(

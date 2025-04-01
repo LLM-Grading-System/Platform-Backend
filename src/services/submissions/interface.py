@@ -5,7 +5,7 @@ from src.services.submissions.dto import SubmissionDTO
 
 class SubmissionService(ABC):
     @abstractmethod
-    async def create_submission(self, task_id: str, student_id: str, github_repo_url: str, code_file_name: str) -> SubmissionDTO:
+    async def create_submission(self, task_id: str, student_id: str, github_repo_url: str, github_pull_request_number: int, code_file_name: str) -> SubmissionDTO:
         raise NotImplementedError
 
     @abstractmethod
@@ -13,5 +13,5 @@ class SubmissionService(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def evaluate_submission(self, submission_id: str, llm_grade: str, llm_feedback: str, llm_report: str) -> None:
+    async def evaluate_submission(self, submission_id: str, llm_grade: str, llm_feedback: str, llm_report: str) -> SubmissionDTO:
         raise NotImplementedError
