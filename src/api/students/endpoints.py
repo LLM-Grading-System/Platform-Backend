@@ -47,8 +47,8 @@ async def create_student(
     return jsonify(SuccessResponse(message="Студент успешно зарегистрирован"), status_code=status.HTTP_201_CREATED)
 
 
-@router.post(
-    "/{student_telegram_user_id}",
+@router.put(
+    "/telegram/{student_telegram_user_id}",
     response_model=SuccessResponse,
     status_code=status.HTTP_200_OK,
     description="Update student",
@@ -64,7 +64,7 @@ async def update_student_with_github_username(
 
 
 @router.get(
-    "/{student_telegram_user_id}",
+    "/telegram/{student_telegram_user_id}",
     response_model=StudentResponse,
     status_code=status.HTTP_200_OK,
     description="Get student",
@@ -75,4 +75,19 @@ async def get_student_by_telegram_user_id(
     student_telegram_user_id: int = Path(),
 ) -> JSONResponse:
     student = await student_service.get_by_telegram_user_id(student_telegram_user_id)
+    return jsonify(StudentResponse.from_dto(student))
+
+
+@router.get(
+    "/github/{github_username}",
+    response_model=StudentResponse,
+    status_code=status.HTTP_200_OK,
+    description="Get student",
+    summary="Get student",
+)
+async def get_student_by_github_username(
+    student_service: Annotated[StudentService, Depends(get_student_service)],
+    github_username: str = Path(),
+) -> JSONResponse:
+    student = await student_service.get_by_github_username(github_username)
     return jsonify(StudentResponse.from_dto(student))
