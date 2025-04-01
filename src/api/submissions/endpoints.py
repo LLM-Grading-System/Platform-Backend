@@ -13,7 +13,7 @@ from miniopy_async import Minio
 from src.api.auth.dependencies import get_user
 from src.api.students.dependencies import get_student_service
 from src.api.submissions.dependencies import get_submission_service
-from src.api.submissions.events import SUBMISSION_TOPIC, SubmissionEventSchema, CreateCommentRequest
+from src.api.submissions.events import SUBMISSION_TOPIC, SubmissionEventSchema, CreateCommentRequest, NEW_COMMENT_TOPIC
 from src.api.submissions.schemas import SubmissionResponse, EvaluationSubmissionRequest
 from src.api.tasks.dependencies import get_task_service
 from src.api.utils import jsonify
@@ -67,7 +67,7 @@ async def evaluate_submission(
             repo_name=gh_repo_name,
             pull_request_number=submission_dto.gh_pull_request_number,
             comment=submission_dto.llm_feedback
-        ), topic=SUBMISSION_TOPIC
+        ), topic=NEW_COMMENT_TOPIC
     )
     return jsonify(SuccessResponse(message="Вердикт успешно сохранен"))
 
