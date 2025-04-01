@@ -6,13 +6,13 @@ from fastapi.openapi.docs import (
 )
 from fastapi.responses import HTMLResponse
 
-SWAGGER_JS_URL = "https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"
-SWAGGER_CSS_URL = "https://unpkg.com/swagger-ui-dist@5/swagger-ui.css"
-REDOC_JS_URL = "https://unpkg.com/redoc@next/bundles/redoc.standalone.js"
+SWAGGER_JS_URL = "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js"
+SWAGGER_CSS_URL = "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css"
+REDOC_JS_URL = "https://cdn.jsdelivr.net/npm/redoc@next/bundles/redoc.standalone.js"
 
 
 def add_custom_docs_endpoints(app: FastAPI) -> None:
-    """Add rewritten docs endpoints with another url of static files (JS, CSS for Swagger and Redoc).
+    """Add rewritten docs routers with another url of static files (JS, CSS for Swagger and Redoc).
 
     :param app: FastAPI-application
     :return: None
